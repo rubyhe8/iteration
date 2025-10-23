@@ -8,6 +8,7 @@ output: github_document
 ```{r message = FALSE}
 library(tidyverse)
 library(rvest)
+library(readxl)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -28,4 +29,159 @@ scale_fill_discrete = scale_fill_viridis_d
 set.seed(1)
 
 ```
+
+start small:
+
+working with z scores 
+```{r}
+x_vec = rnorm(20, mean = 10, sd = 3.5)
+
+(x_vec - mean(x_vec)) / sd(x_vec)
+```
+
+write a function to compute z scores. 
+
+```{r}
+z_scores = function(x) {
+  
+  if(!is.numeric(x)) {
+    stop("The input x should be numeric")
+  }
+  
+  if(length(x) < 5) {
+    stop("Only comupute z scores when the input has 5 or more numbers")
+  }
+  
+  z = (x - mean(x)) / sd(x)
+  
+  z
+}
+```
+
+let's try our function:
+
+```{r}
+z_scores(x = x_vec)
+
+num_vec = rnorm(123, mean = 14, sd = 0.4)
+
+z_scores(x = num_vec)
+```
+
+
+let's break our function 
+
+```{r error = TRUE}
+z_scores(3)
+z_scores("this is a string")
+```
+
+## Let's compute some stuff 
+
+let's compute and return the mean and sd of a numeric vector
+
+```{r}
+mean_and_sd = function(x) {
+  
+  if(!is.numeric(x)) {
+    stop("The input x should be numeric")
+  }
+  
+  if(length(x) < 5) {
+    stop("Only comupute mean and sd when the input has 5 or more numbers")
+  }
+  
+  mean_x = mean(x, na.rm = TRUE)
+  sd_x = sd(x, na.rm = TRUE)
+  
+  tibble(
+    mean = mean_x, 
+    sd = sd_x)
+  
+}
+
+mean_and_sd(x_vec)
+```
+
+## make up data... 
+
+let's *simulate* some data 
+
+```{r}
+sim_df = 
+  tibble(
+    x = rnorm(n = 30, mean = 3, sd = 2)
+  )
+
+sim_df |> 
+  summarize(
+    mu_hat = mean(x),
+    sigma_hat = sd(x)
+  )
+```
+
+Write a function to do simulations. 
+
+```{r}
+sim_mean_sd = function(n_subj = 30, mu = 3, sigma = 2) {
+  
+    sim_df = 
+      tibble(
+        x = rnorm(n = n_subj, mean = mu, sd = sigma)
+      )
+
+    sim_df |> 
+      summarize(
+        mu_hat = mean(x),
+        sigma_hat = sd(x)
+      )
+    
+}
+```
+
+let's run this function. 
+
+```{r}
+sim_mean_sd(mu = 48, 50)
+```
+
+Import the LoTR data 
+
+```{r}
+fellowship_ring = 
+  read_excel("data/LotR_Words.xlsx", range = "B3:D6") |> 
+  mutate(movie = "Fellowship of the Ring")
+
+two_towers = 
+  read_excel("data/LotR_Words.xlsx", range = "F3:H6") |> 
+  mutate(movie = "Two Towers")
+
+return_of_the_king = 
+  read_excel("data/LotR_Words.xlsx", range = "J3:L6") |> 
+  mutate(movie = "Return of the King")
+
+lotr_df = 
+  bind_rows(fellowship_ring, two_towers, return_of_the_king)
+```
+
+writing a function to import the dataset 
+
+```{r}
+lotr_import = function(cell_range, movie_title) {
+  
+  df = 
+    read_excel("data/LotR_Words.xlsx", range = cell_range) |> 
+  mutate(movie = movie_title)
+  
+  
+  df
+}
+
+fellowship = lotr_import(cell_range = "B3:D6", movie_title = "Fellowship")
+two_towers = lotr_import(cell_range = "F3:H6", movie_title = "Two Towers")
+return = lotr_import(cell_range = "J3:L6", movie_title = "Return")
+
+bind_rows(fellowship, two_towers, return)
+```
+
 
