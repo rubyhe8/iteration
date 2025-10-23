@@ -1,0 +1,15 @@
+---
+title: "writing_functions"
+author: "ruby"
+date: "2025-10-23"
+output: github_document
+---
+
+```{r message = FALSE}
+library(tidyverse)
+library(rvest)
+
+set.seed(1)
+
+```
+
