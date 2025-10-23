@@ -184,4 +184,95 @@ return = lotr_import(cell_range = "J3:L6", movie_title = "Return")
 bind_rows(fellowship, two_towers, return)
 ```
 
+look at one more example 
+
+importing nsduh dataset
+
+```{r}
+nsduh_url = 
+  "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+nsduh_html = read_html(nsduh_url)
+
+data_marj_year = 
+  nsduh_html |> 
+  html_table() |> 
+  nth(1) |>
+  slice(-1) |> 
+  select(-contains("P Value")) |>
+  pivot_longer(
+    -State,
+    names_to = "age_year", 
+    values_to = "percent") |>
+  separate(age_year, into = c("age", "year"), sep = "\\(") |>
+  mutate(
+    year = str_replace(year, "\\)", ""),
+    percent = str_replace(percent, "[a-c]$", ""),
+    percent = as.numeric(percent)) |>
+  filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+
+data_marj_month = 
+  nsduh_html |> 
+  html_table() |> 
+  nth(2) |>
+  slice(-1) |> 
+  select(-contains("P Value")) |>
+  pivot_longer(
+    -State,
+    names_to = "age_year", 
+    values_to = "percent") |>
+  separate(age_year, into = c("age", "year"), sep = "\\(") |>
+  mutate(
+    year = str_replace(year, "\\)", ""),
+    percent = str_replace(percent, "[a-c]$", ""),
+    percent = as.numeric(percent)) |>
+  filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+
+
+data_marj_first = 
+  nsduh_html |> 
+  html_table() |> 
+  nth(3) |>
+  slice(-1) |> 
+  select(-contains("P Value")) |>
+  pivot_longer(
+    -State,
+    names_to = "age_year", 
+    values_to = "percent") |>
+  separate(age_year, into = c("age", "year"), sep = "\\(") |>
+  mutate(
+    year = str_replace(year, "\\)", ""),
+    percent = str_replace(percent, "[a-c]$", ""),
+    percent = as.numeric(percent)) |>
+  filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+```
+
+
+write an import function 
+
+```{r}
+nsduh_import = function(html, table_num) {
+  
+  data = 
+    html |> 
+    html_table() |> 
+    nth(table_num) |>
+    slice(-1) |> 
+    select(-contains("P Value")) |>
+    pivot_longer(
+      -State,
+      names_to = "age_year", 
+      values_to = "percent") |>
+    separate(age_year, into = c("age", "year"), sep = "\\(") |>
+    mutate(
+      year = str_replace(year, "\\)", ""),
+      percent = str_replace(percent, "[a-c]$", ""),
+      percent = as.numeric(percent)) |>
+    filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+  
+    data
+}
+
+nsduh_import(nsduh_html, table_num = 1)
+```
 
