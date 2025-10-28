@@ -153,3 +153,156 @@ iterate using `map`
 map(pull(listcol_df, sample), mean_and_sd)
 ```
 
+adding a column for mean and sd 
+
+```{r}
+listcol_df=
+  listcol_df |> 
+  mutate(
+    summary = map(sample, mean_and_sd)
+  )
+
+pull(listcol_df, summary)
+```
+
+
+```{r}
+listcol_df |> 
+  select(-sample) |> 
+  unnest(summary)
+```
+
+## revisiting nsduh 
+
+```{r}
+nsduh_url = 
+  "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+nsduh_html = read_html(nsduh_url)
+
+nsduh_import = function(html, table_num) {
+  
+  data = 
+    html |> 
+    html_table() |> 
+    nth(table_num) |>
+    slice(-1) |> 
+    select(-contains("P Value")) |>
+    pivot_longer(
+      -State,
+      names_to = "age_year", 
+      values_to = "percent") |>
+    separate(age_year, into = c("age", "year"), sep = "\\(") |>
+    mutate(
+      year = str_replace(year, "\\)", ""),
+      percent = str_replace(percent, "[a-c]$", ""),
+      percent = as.numeric(percent)) |>
+    filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+  
+    data
+}
+
+nsduh_import(nsduh_html, table_num = 1)
+```
+
+try this with a `for` loop 
+
+```{r}
+output = vector("list", length = 3)
+
+for (i in 1:3) {
+  
+  output[[i]] = nsduh_import( html = nsduh_html, i)
+  
+}
+```
+
+
+do this with `map`
+
+```{r}
+map(1:3, nsduh_import, html = nsduh_html)
+```
+
+do this all in a dataframe - put the tibble for each table into this dataframe that organizes it
+
+```{r}
+nsduh_df = 
+  tibble(
+    name = c("marj year", "marj month", "marj first"),
+    number = 1:3
+  ) |> 
+  mutate(
+    table = map(number, nsduh_import, html = nsduh_html)
+  ) |> 
+  unnest(table)
+```
+
+## look at weather data 
+```{r}
+library(p8105.datasets)
+data("weather_df")
+```
+
+```{r}
+weather_df |> 
+  filter(name == "CentralPark_NY") |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+let's do a regression 
+
+```{r}
+weather_df |> 
+  filter(name == "CentralPark_NY") |> 
+  lm(tmax ~ tmin, data = _)
+
+weather_df |> 
+  filter(name == "Molokai_HI") |> 
+  lm(tmax ~ tmin, data = _)
+
+weather_df |> 
+  filter(name == "Waterhole_WA") |> 
+  lm(tmax ~ tmin, data = _)
+```
+
+let's iterate differently... using `nest()`
+
+```{r}
+weather_nest = 
+  weather_df |> 
+  nest(data = date:tmin)
+```
+
+```{r}
+
+lm(tmax ~ tmin, data = pull(weather_nest, data)[[1]])
+lm(tmax ~ tmin, data = pull(weather_nest, data)[[2]])
+lm(tmax ~ tmin, data = pull(weather_nest, data)[[3]])
+```
+
+do this using `map`
+
+```{r}
+weather_lm = function(df) {
+  
+  lm(tmax ~ tmin, data = df)
+  
+}
+```
+
+```{r}
+map(pull(weather_nest, data), weather_lm)
+```
+
+```{r}
+weather_nest = 
+  weather_nest |> 
+  mutate(
+    lm_fits = map(data, weather_lm)
+  )
+
+```
+
