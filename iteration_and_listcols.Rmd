@@ -9,7 +9,6 @@ output: github_document
 ```{r message = FALSE}
 library(tidyverse)
 library(rvest)
-library(readxl)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -27,3 +26,130 @@ options(
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
+
+
+## Make a list 
+
+```{r}
+l = 
+  list(
+    vec_numeric = 1:23,
+    char_vec = c("Ruby"),
+    mat = matrix(1:8, nrow = 2, ncol = 4),
+    summary = summary(rnorm(1000, mean = 4))
+  )
+
+l
+
+l[[1]]
+
+```
+
+## Make a different list 
+
+```{r}
+list_normals = 
+  list(
+    a = rnorm(30, mean = 3, sd = 1),
+    b = rnorm(30, mean = 30, sd = 1),
+    c = rnorm(30, mean = 3, sd = 10),
+    d = rnorm(30, mean = 3, sd = 4)
+  )
+
+list_normals
+```
+
+(copy and paste function from last time)
+
+```{r}
+mean_and_sd = function(x) {
+  
+  if(!is.numeric(x)) {
+    stop("The input x should be numeric")
+  }
+  
+  if(length(x) < 5) {
+    stop("Only comupute mean and sd when the input has 5 or more numbers")
+  }
+  
+  mean_x = mean(x, na.rm = TRUE)
+  sd_x = sd(x, na.rm = TRUE)
+  
+  tibble(
+    mean = mean_x, 
+    sd = sd_x)
+  
+}
+```
+
+```{r}
+mean_and_sd(list_normals[[1]])
+```
+
+Use a loop to iterate!
+
+```{r}
+output = vector("list", length = 4)
+
+for (i in 1:4) {
+  output[[i]] = mean_and_sd(list_normals[[i]])
+}
+
+output
+```
+
+
+Use `map` to do the same thing. 
+
+```{r}
+output = map(list_normals, mean_and_sd)
+
+
+output = map(list_normals, median)
+```
+
+Check out some `map` variants 
+
+collapse maps into a dataframe 
+```{r}
+map_dfr(list_normals, mean_and_sd)
+```
+
+can keep track of an input id
+```{r}
+map_dfr(list_normals, mean_and_sd, .id = "sample")
+```
+
+make result of single numbers into a dataframe of single numbers 
+```{r}
+map_dbl(list_normals, median)
+```
+
+## LIST COLUMNS 
+
+try to put my list into a dataframe 
+
+```{r}
+listcol_df = 
+  tibble(
+    name = c("a", "b", "c", "d"),
+    sample = list_normals
+  )
+```
+
+did this really work - can check using`pull()` 
+
+```{r}
+pull(listcol_df, sample)
+```
+
+apply `mean_and_sd`
+```{r}
+mean_and_sd(pull(listcol_df, sample)[[1]])
+```
+
+iterate using `map`
+```{r}
+map(pull(listcol_df, sample), mean_and_sd)
+```
+
