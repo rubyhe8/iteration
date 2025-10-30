@@ -122,21 +122,10 @@ sim_df |>
 
 Write a function to do simulations. 
 
-```{r}
-sim_mean_sd = function(n_subj = 30, mu = 3, sigma = 2) {
-  
-    sim_df = 
-      tibble(
-        x = rnorm(n = n_subj, mean = mu, sd = sigma)
-      )
+(in a source file instead of being in this code chunk)
 
-    sim_df |> 
-      summarize(
-        mu_hat = mean(x),
-        sigma_hat = sd(x)
-      )
-    
-}
+```{r}
+source("sim_mean_sd.R")
 ```
 
 let's run this function. 
